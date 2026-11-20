@@ -56,7 +56,15 @@ export function createApp({ config, airQuality, planner, logger = console }) {
   app.use('/api', limiter, express.json({ limit: BODY_LIMIT }), createPlanRouter({ airQuality, planner, logger }));
   app.use('/api', (_req, _res, next) => next(new AppError(404, 'not_found', 'Unknown API route.')));
 
-  app.use(express.static(PUBLIC_DIR, { maxAge: STATIC_MAX_AGE, index: 'index.html' }));
+  app.use(
+    express.static(PUBLIC_DIR, {
+      maxAge: STATIC_MAX_AGE,
+      index: 'index.html',
+      setHeaders: (res, path) => {
+        if (path.endsWith('index.html')) res.setHeader('Cache-Control', 'no-cache');
+      },
+    }),
+  );
 
   app.use((error, _req, res, _next) => {
     if (error instanceof AppError) {
@@ -74,3 +82,4 @@ export function createApp({ config, airQuality, planner, logger = console }) {
 
   return app;
 }
+
