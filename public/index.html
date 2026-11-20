@@ -15,18 +15,48 @@
 
     <header class="site-header">
       <div class="wrap">
-        <p class="brand"><span aria-hidden="true" class="brand-mark">◌</span> Clearbreath</p>
-        <h1>Breathe easier through smog season</h1>
-        <p class="lede">
-          Tell us where you live and how your household lives. Get a plan for today with low-emission routines,
-          indoor air hacks and sustainable swaps, and see the estimated effect of every choice.
-        </p>
+        <div class="topline">
+          <a class="brand" href="#main" aria-label="Clearbreath home">
+            <span aria-hidden="true" class="brand-mark"><span></span><span></span><span></span></span>
+            <span>clearbreath</span>
+          </a>
+          <p class="topline-note"><span class="live-dot" aria-hidden="true"></span> A little more clarity for today</p>
+        </div>
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">YOUR PERSONAL AIR QUALITY COMPANION</p>
+            <h1>Make room for a <span>better-breathing day.</span></h1>
+            <p class="lede">
+              Smog is hard to control. Your next steps don’t have to be. Get a practical plan shaped around your city,
+              commute and the people at home.
+            </p>
+            <div class="hero-points" aria-label="What your plan includes">
+              <span><span aria-hidden="true">01</span> A safer daily rhythm</span>
+              <span><span aria-hidden="true">02</span> Cleaner indoor air</span>
+              <span><span aria-hidden="true">03</span> Lower-impact swaps</span>
+            </div>
+          </div>
+          <aside class="hero-card" aria-label="Clearbreath plan preview">
+            <div class="hero-card-orbit orbit-one" aria-hidden="true"></div>
+            <div class="hero-card-orbit orbit-two" aria-hidden="true"></div>
+            <p class="hero-card-kicker"><span aria-hidden="true">✳</span> A plan that starts with you</p>
+            <p class="hero-card-title">Small choices.<br />A clearer way through.</p>
+            <p class="hero-card-copy">Use today’s air reading to make your next move feel more informed.</p>
+            <div class="air-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="hero-card-foot"><span>BUILT AROUND YOUR DAY</span><span>↗</span></div>
+          </aside>
+        </div>
       </div>
     </header>
 
     <main id="main" class="wrap layout" tabindex="-1">
-      <section aria-labelledby="form-heading" class="card">
-        <h2 id="form-heading">Your household</h2>
+      <section aria-labelledby="form-heading" class="card planner-card">
+        <div class="section-heading">
+          <p class="section-kicker">FIRST, A LITTLE CONTEXT</p>
+          <span class="step-pill">01 <span aria-hidden="true">/</span> 02</span>
+        </div>
+        <h2 id="form-heading">Your day, your household.</h2>
+        <p class="form-intro">A few details help us shape advice that fits real life.</p>
         <form id="plan-form" novalidate>
           <div class="field">
             <label for="city">City</label>
@@ -107,14 +137,24 @@
             </div>
           </details>
 
-          <button id="submit" class="button" type="submit">Build today's plan</button>
+          <button id="submit" class="button" type="submit"><span>Build my plan</span><span class="button-arrow" aria-hidden="true">↗</span></button>
+          <p class="form-footnote"><span aria-hidden="true">✦</span> Practical guidance, with every impact clearly marked as an estimate.</p>
         </form>
       </section>
 
       <section aria-labelledby="results-heading" class="results" id="results-section">
         <h2 id="results-heading" class="visually-hidden">Your plan</h2>
         <div id="status" class="status" role="status" aria-live="polite" aria-atomic="true">
-          <p class="status-idle">Your personalised plan will appear here.</p>
+          <div class="empty-state">
+            <div class="empty-mark" aria-hidden="true"><span>✳</span></div>
+            <p class="empty-kicker">YOUR PLAN, IN THREE STEPS</p>
+            <p class="status-idle">Tell us a little about your day. We’ll turn the air reading into clear, doable next steps.</p>
+            <div class="empty-steps">
+              <span><b>01</b> Check your air</span>
+              <span><b>02</b> Shape your plan</span>
+              <span><b>03</b> See the impact</span>
+            </div>
+          </div>
         </div>
         <div id="results" hidden></div>
       </section>
@@ -134,3 +174,4 @@
     </noscript>
   </body>
 </html>
+
