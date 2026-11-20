@@ -92,4 +92,3 @@ Air quality data by [Open-Meteo](https://open-meteo.com/) (CC BY 4.0).
 ## License
 
 MIT
-
