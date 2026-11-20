@@ -137,8 +137,8 @@ export function validatePlan(raw) {
 const GEMINI_UNSUPPORTED_KEYS = new Set(['maxLength', 'additionalProperties', '$schema']);
 
 /** Converts the local schema to the dialect accepted by Gemini's responseSchema.
- * @param {object} schema Local JSON schema.
- * @returns {object} Gemini-compatible schema.
+ * @param {Record<string, unknown>} schema Local JSON schema.
+ * @returns {Record<string, unknown>} Gemini-compatible schema.
  */
 export function toGeminiSchema(schema) {
   const out = {};

@@ -13,7 +13,7 @@ const STATIC_MAX_AGE = '1h';
 
 /**
  * Builds the Express app from injected dependencies.
- * @param {{ config: ReturnType<import('./config.js').loadConfig>, airQuality: object, planner: object, logger?: Console }} deps
+ * @param {{ config: import('./types.js').AppConfig, airQuality: import('./types.js').AirQualityService, planner: import('./types.js').PlannerService, logger?: import('./types.js').AppLogger }} deps
  * @returns {import('express').Express} Configured app.
  */
 export function createApp({ config, airQuality, planner, logger = console }) {

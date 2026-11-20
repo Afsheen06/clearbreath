@@ -45,7 +45,7 @@ function validateManualAqi(values) {
 
 /** Builds an API payload from validated form values.
  * @param {import('../../src/types.js').FormValues} values Validated form values.
- * @returns {object} API request body.
+ * @returns {import('../../src/types.js').PlanRequest} API request body.
  */
 export function toPayload(values) {
   const payload = {

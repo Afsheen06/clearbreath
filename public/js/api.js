@@ -14,7 +14,7 @@ export class ApiError extends Error {
 }
 
 /** Sends a plan request and parses its response.
- * @param {object} payload Validated request payload.
+ * @param {import('../../src/types.js').PlanRequest} payload Validated request payload.
  * @returns {Promise<import('../../src/types.js').PlanResponse>} Plan response.
  */
 export async function requestPlan(payload) {
