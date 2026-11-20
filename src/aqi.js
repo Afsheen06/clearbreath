@@ -29,8 +29,8 @@ const PM25_BREAKPOINTS = Object.freeze([
 ]);
 
 /**
- * Per-mode assumptions. outdoorFactor: how much of ambient PM2.5 reaches the traveller.
- * kgCo2PerKm: typical per-passenger tailpipe CO2. hoursPerKm: typical urban travel time.
+ * Commute estimates: `outdoorFactor` is ambient PM2.5 reaching a traveller,
+ * `kgCo2PerKm` is per-passenger tailpipe CO2, and `hoursPerKm` is urban travel time.
  */
 export const COMMUTE_MODES = Object.freeze({
   walk: { label: 'walking', outdoorFactor: 1, kgCo2PerKm: 0, hoursPerKm: 0.2 },
@@ -54,7 +54,12 @@ const COOKING_INDOOR_PENALTY = Object.freeze({ gas: 0.05, induction: 0, biomass:
 const PLAN_COOKING_PENALTY_SHARE = 0.5;
 const SWAPPED_TO_TRANSIT = new Set(['car', 'two_wheeler']);
 
-/** Rounds to a fixed number of decimal places. */
+/**
+ * Rounds a numeric value to a fixed number of decimal places.
+ * @param {number} value Number to round.
+ * @param {number} [digits=1] Decimal places to retain.
+ * @returns {number} Rounded value.
+ */
 export function roundTo(value, digits = 1) {
   const scale = 10 ** digits;
   return Math.round(value * scale) / scale;
@@ -66,15 +71,20 @@ function assertAqi(aqi) {
   }
 }
 
-/** @param {number} aqi US AQI value */
+/**
+ * Returns the category for a US AQI value.
+ * @param {number} aqi US AQI value.
+ * @returns {object} The matching AQI category.
+ */
 export function categorizeAqi(aqi) {
   assertAqi(aqi);
   return AQI_CATEGORIES.find((category) => aqi <= category.maxAqi);
 }
 
 /**
- * Approximates PM2.5 (µg/m³) from a US AQI by linear interpolation inside the EPA breakpoints.
- * @param {number} aqi
+ * Approximates PM2.5 (µg/m³) from a US AQI using EPA breakpoints.
+ * @param {number} aqi US AQI value.
+ * @returns {number} Estimated PM2.5 concentration in µg/m³.
  */
 export function pm25FromAqi(aqi) {
   assertAqi(aqi);
@@ -85,7 +95,12 @@ export function pm25FromAqi(aqi) {
   return roundTo(band.pmLow + progress * (band.pmHigh - band.pmLow), 1);
 }
 
-/** Round-trip tailpipe CO2 (kg) for a commute of `oneWayKm` in the given mode. */
+/**
+ * Estimates round-trip tailpipe CO2 for a commute.
+ * @param {string} mode Commute mode key.
+ * @param {number} oneWayKm One-way commute distance in kilometres.
+ * @returns {number} Estimated kilograms of CO2 per round trip.
+ */
 export function estimateDailyCo2Kg(mode, oneWayKm) {
   const config = COMMUTE_MODES[mode];
   return roundTo(2 * oneWayKm * config.kgCo2PerKm, 2);
@@ -105,37 +120,33 @@ function dailyExposure({ pm25, mode, oneWayKm, outdoorMultiplier, indoor }) {
   return commute + errands + pm25 * indoorHours * indoor;
 }
 
-/**
- * Compares a typical day with a day that follows the plan.
- * @param {{ commute: string, commuteKm: number, hasPurifier: boolean, cookingFuel: string }} profile
- * @param {number} pm25 ambient PM2.5 in µg/m³
- * @param {number} aqi
- */
-export function estimateComparison(profile, pm25, aqi) {
-  assertAqi(aqi);
-  const protective = aqi >= PROTECTIVE_ACTION_AQI;
-  const planMode = SWAPPED_TO_TRANSIT.has(profile.commute) ? 'transit' : profile.commute;
+function planCommuteMode(commute) {
+  return SWAPPED_TO_TRANSIT.has(commute) ? 'transit' : commute;
+}
 
-  const baselineExposure = dailyExposure({
+function computeBaselineExposure(profile, pm25) {
+  return dailyExposure({
     pm25,
     mode: profile.commute,
     oneWayKm: profile.commuteKm,
     outdoorMultiplier: 1,
     indoor: indoorFactor(INDOOR_FACTOR.baseline, profile, 1),
   });
-  const planExposure = dailyExposure({
+}
+
+function computePlanExposure(profile, pm25, protective) {
+  return dailyExposure({
     pm25,
-    mode: planMode,
+    mode: planCommuteMode(profile.commute),
     oneWayKm: profile.commuteKm,
     outdoorMultiplier: protective ? MASK_OUTDOOR_FACTOR * OFF_PEAK_FACTOR : 1,
     indoor: indoorFactor(INDOOR_FACTOR.plan, profile, PLAN_COOKING_PENALTY_SHARE),
   });
+}
 
-  const baselineCo2Kg = estimateDailyCo2Kg(profile.commute, profile.commuteKm);
-  const planCo2Kg = estimateDailyCo2Kg(planMode, profile.commuteKm);
-  const reduction = baselineExposure > 0 ? 1 - planExposure / baselineExposure : 0;
-
-  const assumptions = [
+function buildAssumptions(profile, _protective) {
+  // The mask assumption describes the model's AQI threshold, so it stays visible at every AQI.
+  return [
     'Exposure is a time-weighted PM2.5 total over 24 hours (µg·h/m³) built from simple, fixed assumptions.',
     profile.commute === 'wfh'
       ? 'You work from home, so no commute exposure or emissions are counted.'
@@ -146,6 +157,24 @@ export function estimateComparison(profile, pm25, aqi) {
     ...(SWAPPED_TO_TRANSIT.has(profile.commute) ? ['The plan assumes you switch solo trips to public transit.'] : []),
     'These are illustrative estimates, not medical or regulatory figures.',
   ];
+}
+
+/**
+ * Compares estimated exposure and commute emissions for a usual day and planned day.
+ * @param {{ commute: string, commuteKm: number, hasPurifier: boolean, cookingFuel: string }} profile Household and commute profile.
+ * @param {number} pm25 Ambient PM2.5 in µg/m³.
+ * @param {number} aqi US AQI value.
+ * @returns {object} Exposure, emissions, savings, and assumptions.
+ */
+export function estimateComparison(profile, pm25, aqi) {
+  assertAqi(aqi);
+  const protective = aqi >= PROTECTIVE_ACTION_AQI;
+  const planMode = planCommuteMode(profile.commute);
+  const baselineExposure = computeBaselineExposure(profile, pm25);
+  const planExposure = computePlanExposure(profile, pm25, protective);
+  const baselineCo2Kg = estimateDailyCo2Kg(profile.commute, profile.commuteKm);
+  const planCo2Kg = estimateDailyCo2Kg(planMode, profile.commuteKm);
+  const reduction = baselineExposure > 0 ? 1 - planExposure / baselineExposure : 0;
 
   return {
     baselineExposure: roundTo(baselineExposure, 0),
@@ -154,6 +183,6 @@ export function estimateComparison(profile, pm25, aqi) {
     baselineCo2Kg,
     planCo2Kg,
     co2SavedKg: roundTo(Math.max(0, baselineCo2Kg - planCo2Kg), 2),
-    assumptions,
+    assumptions: buildAssumptions(profile, protective),
   };
 }
