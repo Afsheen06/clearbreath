@@ -40,6 +40,9 @@ A `Dockerfile` is included (for example Google Cloud Run). Set `GEMINI_API_KEY` 
 
 ## Architecture
 
+[Architecture guide](ARCHITECTURE.md)
+[Contributing guide](CONTRIBUTING.md)
+
 ```
 public/            static UI (semantic HTML, CSS, vanilla ES modules, no build step)
   js/rules.js        instant client-side validation (mirrors the server)

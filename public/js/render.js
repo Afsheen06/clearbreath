@@ -105,13 +105,13 @@ function renderComparisonRows(comparison) {
   ]);
 }
 
-function renderComparison(c) {
+function renderComparison(comparison) {
   const section = createNode('section', { className: 'compare', attrs: { 'aria-labelledby': 'compare-heading' } });
   section.append(
     createNode('h3', { text: 'Your day: no change vs with this plan', attrs: { id: 'compare-heading' } }),
     createNode('p', { text: 'Illustrative estimates from simple assumptions, not measurements.', className: 'section-note' }),
-    renderComparisonRows(c),
-    createNode('details', {}, [createNode('summary', { text: 'How these estimates are made' }), createNode('ul', {}, c.assumptions.map((a) => createNode('li', { text: a })))]),
+    renderComparisonRows(comparison),
+    createNode('details', {}, [createNode('summary', { text: 'How these estimates are made' }), createNode('ul', {}, comparison.assumptions.map((assumption) => createNode('li', { text: assumption })))]),
   );
   return section;
 }

@@ -84,7 +84,7 @@ function checkArray(schema, value, path, errors) {
   }
   const limited = schema.maxItems ? value.slice(0, schema.maxItems) : value;
   return limited
-    .map((entry, index) => check(schema.items, entry, `${path}[${index}]`, errors))
+    .map((entry, index) => checkValue(schema.items, entry, `${path}[${index}]`, errors))
     .filter((entry) => entry !== undefined);
 }
 
@@ -101,7 +101,7 @@ function checkObject(schema, value, path, errors) {
       if (required) errors.push(`${path}.${key}: is required`);
       continue;
     }
-    const child = check(propertySchema, raw, `${path}.${key}`, errors);
+    const child = checkValue(propertySchema, raw, `${path}.${key}`, errors);
     if (child !== undefined) out[key] = child;
   }
   return out;
@@ -118,7 +118,7 @@ const CHECKERS = new Map([
 ]);
 
 /** Validates against a schema and returns a sanitised copy (unknown keys dropped, long text trimmed). */
-function check(schema, value, path, errors) {
+function checkValue(schema, value, path, errors) {
   const checker = CHECKERS.get(schema.type);
   if (!checker) throw new Error(`Unsupported schema type: ${schema.type}`);
   return checker(schema, value, path, errors);
@@ -130,7 +130,7 @@ function check(schema, value, path, errors) {
  */
 export function validatePlan(raw) {
   const errors = [];
-  const value = check(PLAN_JSON_SCHEMA, raw, 'plan', errors);
+  const value = checkValue(PLAN_JSON_SCHEMA, raw, 'plan', errors);
   return errors.length ? { ok: false, errors } : { ok: true, value };
 }
 
