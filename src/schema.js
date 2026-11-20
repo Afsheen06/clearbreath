@@ -52,64 +52,72 @@ function ellipsize(value, maxLength) {
   return value.length > maxLength ? `${value.slice(0, maxLength - 1).trimEnd()}…` : value;
 }
 
+function checkString(schema, value, path, errors) {
+  if (typeof value !== 'string') {
+    errors.push(`${path}: expected text`);
+    return undefined;
+  }
+  const cleaned = value.replace(/\s+/g, ' ').trim();
+  if (!cleaned) {
+    errors.push(`${path}: must not be empty`);
+    return undefined;
+  }
+  if (schema.enum) {
+    const lowered = cleaned.toLowerCase();
+    if (!schema.enum.includes(lowered)) {
+      errors.push(`${path}: must be one of ${schema.enum.join(', ')}`);
+      return undefined;
+    }
+    return lowered;
+  }
+  return schema.maxLength ? ellipsize(cleaned, schema.maxLength) : cleaned;
+}
+
+function checkArray(schema, value, path, errors) {
+  if (!Array.isArray(value)) {
+    errors.push(`${path}: expected a list`);
+    return undefined;
+  }
+  if (schema.minItems && value.length < schema.minItems) {
+    errors.push(`${path}: needs at least ${schema.minItems} item(s)`);
+    return undefined;
+  }
+  const limited = schema.maxItems ? value.slice(0, schema.maxItems) : value;
+  return limited
+    .map((entry, index) => check(schema.items, entry, `${path}[${index}]`, errors))
+    .filter((entry) => entry !== undefined);
+}
+
+function checkObject(schema, value, path, errors) {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    errors.push(`${path}: expected an object`);
+    return undefined;
+  }
+  const out = {};
+  for (const [key, propertySchema] of Object.entries(schema.properties)) {
+    const required = schema.required?.includes(key);
+    const raw = Object.hasOwn(value, key) ? value[key] : undefined;
+    if (raw === undefined || raw === null || (!required && typeof raw === 'string' && raw.trim() === '')) {
+      if (required) errors.push(`${path}.${key}: is required`);
+      continue;
+    }
+    const child = check(propertySchema, raw, `${path}.${key}`, errors);
+    if (child !== undefined) out[key] = child;
+  }
+  return out;
+}
+
+const CHECKERS = new Map([
+  ['string', checkString],
+  ['array', checkArray],
+  ['object', checkObject],
+]);
+
 /** Validates against a schema and returns a sanitised copy (unknown keys dropped, long text trimmed). */
 function check(schema, value, path, errors) {
-  switch (schema.type) {
-    case 'string': {
-      if (typeof value !== 'string') {
-        errors.push(`${path}: expected text`);
-        return undefined;
-      }
-      const cleaned = value.replace(/\s+/g, ' ').trim();
-      if (!cleaned) {
-        errors.push(`${path}: must not be empty`);
-        return undefined;
-      }
-      if (schema.enum) {
-        const lowered = cleaned.toLowerCase();
-        if (!schema.enum.includes(lowered)) {
-          errors.push(`${path}: must be one of ${schema.enum.join(', ')}`);
-          return undefined;
-        }
-        return lowered;
-      }
-      return schema.maxLength ? ellipsize(cleaned, schema.maxLength) : cleaned;
-    }
-    case 'array': {
-      if (!Array.isArray(value)) {
-        errors.push(`${path}: expected a list`);
-        return undefined;
-      }
-      if (schema.minItems && value.length < schema.minItems) {
-        errors.push(`${path}: needs at least ${schema.minItems} item(s)`);
-        return undefined;
-      }
-      const limited = schema.maxItems ? value.slice(0, schema.maxItems) : value;
-      return limited
-        .map((entry, index) => check(schema.items, entry, `${path}[${index}]`, errors))
-        .filter((entry) => entry !== undefined);
-    }
-    case 'object': {
-      if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-        errors.push(`${path}: expected an object`);
-        return undefined;
-      }
-      const out = {};
-      for (const [key, propertySchema] of Object.entries(schema.properties)) {
-        const required = schema.required?.includes(key);
-        const raw = Object.hasOwn(value, key) ? value[key] : undefined;
-        if (raw === undefined || raw === null || (!required && typeof raw === 'string' && raw.trim() === '')) {
-          if (required) errors.push(`${path}.${key}: is required`);
-          continue;
-        }
-        const child = check(propertySchema, raw, `${path}.${key}`, errors);
-        if (child !== undefined) out[key] = child;
-      }
-      return out;
-    }
-    default:
-      throw new Error(`Unsupported schema type: ${schema.type}`);
-  }
+  const checker = CHECKERS.get(schema.type);
+  if (!checker) throw new Error(`Unsupported schema type: ${schema.type}`);
+  return checker(schema, value, path, errors);
 }
 
 /**
