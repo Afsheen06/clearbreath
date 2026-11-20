@@ -75,7 +75,7 @@ function renderSection(def, items) {
   return section;
 }
 
-function barLine(label, value, max, kind, unit) {
+function barLine({ label, value, max, kind, unit }) {
   const bar = createNode('div', { className: 'bar', attrs: { 'data-kind': kind } });
   bar.style.width = `${barWidthPercent(value, max)}%`;
   return createNode('div', { className: 'bar-line' }, [
@@ -85,12 +85,12 @@ function barLine(label, value, max, kind, unit) {
   ]);
 }
 
-function comparisonRow(label, baseline, planned, max, unit, impactText) {
+function comparisonRow({ label, baseline, planned, max, unit, impactText }) {
   return createNode('div', { className: 'compare-row' }, [
     createNode('dt', { text: label }),
     createNode('dd', {}, [
-      barLine('No change', baseline, max, 'base', unit),
-      barLine('With this plan', planned, max, 'plan', unit),
+      barLine({ label: 'No change', value: baseline, max, kind: 'base', unit }),
+      barLine({ label: 'With this plan', value: planned, max, kind: 'plan', unit }),
       createNode('p', { text: impactText, className: 'big-number' }),
     ]),
   ]);
@@ -100,8 +100,8 @@ function renderComparisonRows(comparison) {
   const exposureMax = Math.max(comparison.baselineExposure, comparison.planExposure);
   const co2Max = Math.max(comparison.baselineCo2Kg, comparison.planCo2Kg);
   return createNode('dl', {}, [
-    comparisonRow('Estimated PM2.5 exposure over 24 hours', comparison.baselineExposure, comparison.planExposure, exposureMax, ' µg·h/m³', `About ${comparison.reductionPercent}% lower`),
-    comparisonRow('Estimated commute CO₂ per day (kg)', comparison.baselineCo2Kg, comparison.planCo2Kg, co2Max, ' kg', comparison.co2SavedKg > 0 ? `About ${comparison.co2SavedKg} kg CO₂ avoided` : 'No extra commute emissions to avoid'),
+    comparisonRow({ label: 'Estimated PM2.5 exposure over 24 hours', baseline: comparison.baselineExposure, planned: comparison.planExposure, max: exposureMax, unit: ' µg·h/m³', impactText: `About ${comparison.reductionPercent}% lower` }),
+    comparisonRow({ label: 'Estimated commute CO₂ per day (kg)', baseline: comparison.baselineCo2Kg, planned: comparison.planCo2Kg, max: co2Max, unit: ' kg', impactText: comparison.co2SavedKg > 0 ? `About ${comparison.co2SavedKg} kg CO₂ avoided` : 'No extra commute emissions to avoid' }),
   ]);
 }
 

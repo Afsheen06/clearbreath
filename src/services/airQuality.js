@@ -56,14 +56,7 @@ async function getJson(fetchImpl, url, timeoutMs, label) {
 
 const finiteOrNull = (value) => (typeof value === 'number' && Number.isFinite(value) ? value : null);
 
-/**
- * Creates an air-quality service. `fetchImpl` can replace network access.
- * @param {{ fetchImpl?: typeof fetch, timeoutMs: number, cacheTtlMs: number, now?: () => number }} options
- * @returns {{ getAirQuality(city: string, manualAqi: number|null): Promise<import('../types.js').AirReading> }} Air-quality service.
- */
-export function createAirQualityService({ fetchImpl = fetch, timeoutMs, cacheTtlMs, now }) {
-  const cache = new TtlCache(cacheTtlMs, MAX_CACHE_ENTRIES, now);
-
+function createAirLookup(fetchImpl, timeoutMs) {
   async function geocode(city) {
     const url = `${GEOCODE_URL}?${new URLSearchParams({ name: city, count: '1', language: 'en', format: 'json' })}`;
     const data = await getJson(fetchImpl, url, timeoutMs, 'The location service');
@@ -97,6 +90,18 @@ export function createAirQualityService({ fetchImpl = fetch, timeoutMs, cacheTtl
       observedAt: typeof data.current.time === 'string' ? data.current.time : null,
     };
   }
+
+  return { geocode, fetchCurrent };
+}
+
+/**
+ * Creates an air-quality service. `fetchImpl` can replace network access.
+ * @param {{ fetchImpl?: typeof fetch, timeoutMs: number, cacheTtlMs: number, now?: () => number }} options
+ * @returns {{ getAirQuality(city: string, manualAqi: number|null): Promise<import('../types.js').AirReading> }} Air-quality service.
+ */
+export function createAirQualityService({ fetchImpl = fetch, timeoutMs, cacheTtlMs, now }) {
+  const cache = new TtlCache(cacheTtlMs, MAX_CACHE_ENTRIES, now);
+  const { geocode, fetchCurrent } = createAirLookup(fetchImpl, timeoutMs);
 
   /**
    * Resolves a city to an air-quality reading. A manual AQI skips the live air fetch

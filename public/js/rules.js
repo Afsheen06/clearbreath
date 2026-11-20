@@ -25,21 +25,22 @@ export function validateForm(values) {
   } else if (!RULES.cityPattern.test(city)) {
     errors.push({ field: 'city', message: 'Use letters and spaces only for the city name.' });
   }
-
-  if (values.commute !== 'wfh') {
-    const km = Number(values.commuteKm);
-    if (values.commuteKm !== '' && !(Number.isInteger(km) && km >= RULES.commuteKmMin && km <= RULES.commuteKmMax)) {
-      errors.push({ field: 'commuteKm', message: `Enter a whole number from ${RULES.commuteKmMin} to ${RULES.commuteKmMax}.` });
-    }
-  }
-
-  if (values.manualAqi !== '') {
-    const aqi = Number(values.manualAqi);
-    if (!(Number.isInteger(aqi) && aqi >= RULES.aqiMin && aqi <= RULES.aqiMax)) {
-      errors.push({ field: 'manualAqi', message: `Enter a whole number from ${RULES.aqiMin} to ${RULES.aqiMax}.` });
-    }
-  }
+  errors.push(...validateCommute(values), ...validateManualAqi(values));
   return errors;
+}
+
+function validateCommute(values) {
+  if (values.commute === 'wfh' || values.commuteKm === '') return [];
+  const km = Number(values.commuteKm);
+  if (Number.isInteger(km) && km >= RULES.commuteKmMin && km <= RULES.commuteKmMax) return [];
+  return [{ field: 'commuteKm', message: `Enter a whole number from ${RULES.commuteKmMin} to ${RULES.commuteKmMax}.` }];
+}
+
+function validateManualAqi(values) {
+  if (values.manualAqi === '') return [];
+  const aqi = Number(values.manualAqi);
+  if (Number.isInteger(aqi) && aqi >= RULES.aqiMin && aqi <= RULES.aqiMax) return [];
+  return [{ field: 'manualAqi', message: `Enter a whole number from ${RULES.aqiMin} to ${RULES.aqiMax}.` }];
 }
 
 /** Builds an API payload from validated form values.

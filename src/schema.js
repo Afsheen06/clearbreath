@@ -97,7 +97,7 @@ function checkObject(schema, value, path, errors) {
   for (const [key, propertySchema] of Object.entries(schema.properties)) {
     const required = schema.required?.includes(key);
     const raw = Object.hasOwn(value, key) ? value[key] : undefined;
-    if (raw === undefined || raw === null || (!required && typeof raw === 'string' && raw.trim() === '')) {
+    if (shouldSkipObjectValue(raw, required)) {
       if (required) errors.push(`${path}.${key}: is required`);
       continue;
     }
@@ -105,6 +105,10 @@ function checkObject(schema, value, path, errors) {
     if (child !== undefined) out[key] = child;
   }
   return out;
+}
+
+function shouldSkipObjectValue(raw, required) {
+  return raw === undefined || raw === null || (!required && typeof raw === 'string' && raw.trim() === '');
 }
 
 const CHECKERS = new Map([

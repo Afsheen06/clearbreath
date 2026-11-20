@@ -47,20 +47,23 @@ function readBoolean(field, raw, fallback, fail) {
   return fallback;
 }
 
-function readEnum(field, raw, allowed, fallback, fail) {
+function readEnum({ field, raw, allowed, fallback, fail }) {
   if (raw === undefined) return fallback;
   if (typeof raw === 'string' && allowed.includes(raw)) return raw;
   fail(field, `Must be one of: ${allowed.join(', ')}.`);
   return fallback;
 }
 
-function readNumber(field, raw, { min, max, integer = false }, fail) {
+function readNumber({ field, raw, min, max, integer = false, fail }) {
   if (raw === undefined || raw === null) return null;
-  const valid =
-    typeof raw === 'number' && Number.isFinite(raw) && raw >= min && raw <= max && (!integer || Number.isInteger(raw));
+  const valid = validNumber(raw, { min, max, integer });
   if (valid) return raw;
   fail(field, `Must be ${integer ? 'a whole number' : 'a number'} from ${min} to ${max}.`);
   return null;
+}
+
+function validNumber(raw, { min, max, integer }) {
+  return typeof raw === 'number' && Number.isFinite(raw) && raw >= min && raw <= max && (!integer || Number.isInteger(raw));
 }
 
 function readHousehold(raw, fail) {
@@ -96,18 +99,18 @@ export function validatePlanRequest(body) {
     if (!ALLOWED_FIELDS.has(key)) fail(key, 'Unknown field.');
   }
 
-  const commute = readEnum('commute', body.commute, COMMUTE_MODE_KEYS, 'transit', fail);
-  const requestedKm = readNumber('commuteKm', body.commuteKm, { min: COMMUTE_KM_MIN, max: COMMUTE_KM_MAX, integer: true }, fail);
+  const commute = readEnum({ field: 'commute', raw: body.commute, allowed: COMMUTE_MODE_KEYS, fallback: 'transit', fail });
+  const requestedKm = readNumber({ field: 'commuteKm', raw: body.commuteKm, min: COMMUTE_KM_MIN, max: COMMUTE_KM_MAX, integer: true, fail });
 
   const value = {
     city: readCity(body.city, fail),
     household: readHousehold(body.household, fail),
     commute,
     commuteKm: commute === 'wfh' ? 0 : (requestedKm ?? DEFAULT_COMMUTE_KM),
-    homeType: readEnum('homeType', body.homeType, HOME_TYPES, 'apartment', fail),
+    homeType: readEnum({ field: 'homeType', raw: body.homeType, allowed: HOME_TYPES, fallback: 'apartment', fail }),
     hasPurifier: readBoolean('hasPurifier', body.hasPurifier, false, fail),
-    cookingFuel: readEnum('cookingFuel', body.cookingFuel, COOKING_FUELS, 'gas', fail),
-    manualAqi: readNumber('manualAqi', body.manualAqi, { min: AQI_MIN, max: AQI_MAX, integer: true }, fail),
+    cookingFuel: readEnum({ field: 'cookingFuel', raw: body.cookingFuel, allowed: COOKING_FUELS, fallback: 'gas', fail }),
+    manualAqi: readNumber({ field: 'manualAqi', raw: body.manualAqi, min: AQI_MIN, max: AQI_MAX, integer: true, fail }),
   };
 
   return errors.length ? { ok: false, errors } : { ok: true, value };
