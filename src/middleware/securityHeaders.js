@@ -1,5 +1,8 @@
 import helmet from 'helmet';
 
+/** Creates the configured security headers middleware.
+ * @returns {import('express').RequestHandler} Helmet middleware.
+ */
 export function securityHeaders() {
   return helmet({
     contentSecurityPolicy: {

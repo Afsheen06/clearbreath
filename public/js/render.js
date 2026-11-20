@@ -117,9 +117,9 @@ function renderComparison(c) {
 }
 
 /**
- * Replaces the contents of `container` with the plan.
+ * Replaces the container contents with a plan response.
  * @param {HTMLElement} container
- * @param {{ mode: string, air: object, plan: object, comparison: object, disclaimer: string }} data
+ * @param {import('../../src/types.js').PlanResponse} data Plan response.
  */
 export function renderPlan(container, data) {
   const parts = [];

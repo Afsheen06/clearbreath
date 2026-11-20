@@ -293,8 +293,8 @@ function buildSwaps(profile) {
 
 /**
  * Builds a deterministic fallback plan matching the Gemini plan shape.
- * @param {{ profile: object, air: object }} input
- * @returns {{ healthAlert: object, routines: object[], indoor: object[], swaps: object[] }}
+ * @param {{ profile: import('../types.js').Profile, air: import('../types.js').AirReading }} input
+ * @returns {import('../types.js').Plan} Fallback plan.
  */
 export function buildFallbackPlan({ profile, air }) {
   return {

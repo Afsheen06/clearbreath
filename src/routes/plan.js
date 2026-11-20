@@ -5,8 +5,9 @@ import { AppError } from '../errors.js';
 import { buildFallbackPlan } from '../services/fallbackPlanner.js';
 import { validatePlanRequest } from '../validation.js';
 
-/**
- * @param {{ airQuality: { getAirQuality: Function }, planner: { enabled: boolean, generatePlan: Function }, logger?: Pick<Console, 'warn'> }} deps
+/** Creates the API router for plan requests.
+ * @param {{ airQuality: { getAirQuality(city: string, manualAqi: number|null): Promise<import('../types.js').AirReading> }, planner: { enabled: boolean, generatePlan: Function }, logger?: Pick<Console, 'warn'> }} deps
+ * @returns {import('express').Router} Plan API router.
  */
 export function createPlanRouter({ airQuality, planner, logger = console }) {
   const router = Router();

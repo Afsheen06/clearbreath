@@ -13,8 +13,8 @@ export const RULES = Object.freeze({
 });
 
 /**
- * @param {{ city: string, commute: string, commuteKm: string, manualAqi: string }} values raw form strings
- * @returns {Array<{ field: string, message: string }>}
+ * @param {import('../../src/types.js').FormValues} values Raw form values.
+ * @returns {import('../../src/types.js').FieldError[]} Validation errors.
  */
 export function validateForm(values) {
   const errors = [];
@@ -42,7 +42,10 @@ export function validateForm(values) {
   return errors;
 }
 
-/** Builds the API payload from raw form values (already validated). */
+/** Builds an API payload from validated form values.
+ * @param {import('../../src/types.js').FormValues} values Validated form values.
+ * @returns {object} API request body.
+ */
 export function toPayload(values) {
   const payload = {
     city: values.city.replace(/\s+/g, ' ').trim(),

@@ -1,5 +1,9 @@
 import { AppError, errorBody } from '../errors.js';
 
+/** Creates the centralized Express error handler.
+ * @param {Pick<Console, 'error'>} logger Error logger.
+ * @returns {import('express').ErrorRequestHandler} Error middleware.
+ */
 export function createErrorHandler(logger) {
   return (error, _req, res, _next) => {
     if (error instanceof AppError) {

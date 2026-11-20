@@ -1,6 +1,10 @@
 import rateLimit from 'express-rate-limit';
 import { errorBody } from '../errors.js';
 
+/** Creates the configured API rate limiter.
+ * @param {import('../types.js').RateLimitConfig} config Rate limit settings.
+ * @returns {import('express').RequestHandler} Rate limit middleware.
+ */
 export function createRateLimiter(config) {
   return rateLimit({
     windowMs: config.rateLimitWindowMs,

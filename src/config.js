@@ -8,6 +8,7 @@ function positiveInt(value, fallback) {
 /**
  * Reads runtime configuration from environment variables with safe defaults.
  * @param {Record<string, string | undefined>} [env]
+ * @returns {Readonly<Record<string, string|number|boolean>>} Frozen settings.
  */
 export function loadConfig(env = process.env) {
   return Object.freeze({

@@ -2,6 +2,10 @@ const REQUEST_TIMEOUT_MS = 45_000;
 
 /** Error carrying API field messages so the form can mark inputs. */
 export class ApiError extends Error {
+  /** Creates an API error with optional field-level messages.
+   * @param {string} message User-facing error.
+   * @param {import('../../src/types.js').FieldError[]} [fields] Field errors.
+   */
   constructor(message, fields = []) {
     super(message);
     this.name = 'ApiError';
@@ -9,9 +13,9 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * @param {object} payload
- * @returns {Promise<object>} the plan response
+/** Sends a plan request and parses its response.
+ * @param {object} payload Validated request payload.
+ * @returns {Promise<import('../../src/types.js').PlanResponse>} Plan response.
  */
 export async function requestPlan(payload) {
   let response;

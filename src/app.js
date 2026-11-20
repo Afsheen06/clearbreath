@@ -12,8 +12,9 @@ const BODY_LIMIT = '8kb';
 const STATIC_MAX_AGE = '1h';
 
 /**
- * Builds the Express app. Dependencies are injected so tests can mock the network.
+ * Builds the Express app from injected dependencies.
  * @param {{ config: ReturnType<import('./config.js').loadConfig>, airQuality: object, planner: object, logger?: Console }} deps
+ * @returns {import('express').Express} Configured app.
  */
 export function createApp({ config, airQuality, planner, logger = console }) {
   const app = express();

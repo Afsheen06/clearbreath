@@ -74,7 +74,7 @@ function assertAqi(aqi) {
 /**
  * Returns the category for a US AQI value.
  * @param {number} aqi US AQI value.
- * @returns {object} The matching AQI category.
+ * @returns {import('./types.js').AqiCategory} The matching AQI category.
  */
 export function categorizeAqi(aqi) {
   assertAqi(aqi);
@@ -97,7 +97,7 @@ export function pm25FromAqi(aqi) {
 
 /**
  * Estimates round-trip tailpipe CO2 for a commute.
- * @param {string} mode Commute mode key.
+ * @param {import('./types.js').CommuteMode} mode Commute mode key.
  * @param {number} oneWayKm One-way commute distance in kilometres.
  * @returns {number} Estimated kilograms of CO2 per round trip.
  */
@@ -161,10 +161,10 @@ function buildAssumptions(profile, _protective) {
 
 /**
  * Compares estimated exposure and commute emissions for a usual day and planned day.
- * @param {{ commute: string, commuteKm: number, hasPurifier: boolean, cookingFuel: string }} profile Household and commute profile.
+ * @param {import('./types.js').Profile} profile Household and commute profile.
  * @param {number} pm25 Ambient PM2.5 in µg/m³.
  * @param {number} aqi US AQI value.
- * @returns {object} Exposure, emissions, savings, and assumptions.
+ * @returns {import('./types.js').Comparison} Exposure, emissions, savings, and assumptions.
  */
 export function estimateComparison(profile, pm25, aqi) {
   assertAqi(aqi);

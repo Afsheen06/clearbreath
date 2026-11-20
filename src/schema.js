@@ -120,9 +120,9 @@ function check(schema, value, path, errors) {
   return checker(schema, value, path, errors);
 }
 
-/**
- * @param {unknown} raw model output after JSON parsing
- * @returns {{ ok: true, value: object } | { ok: false, errors: string[] }}
+/** Validates and normalizes untrusted model output.
+ * @param {unknown} raw Model output after JSON parsing.
+ * @returns {{ ok: true, value: import('./types.js').Plan } | { ok: false, errors: string[] }} Validation result.
  */
 export function validatePlan(raw) {
   const errors = [];
@@ -132,7 +132,10 @@ export function validatePlan(raw) {
 
 const GEMINI_UNSUPPORTED_KEYS = new Set(['maxLength', 'additionalProperties', '$schema']);
 
-/** Converts the schema into the OpenAPI-style dialect accepted by Gemini's `responseSchema`. */
+/** Converts the local schema to the dialect accepted by Gemini's responseSchema.
+ * @param {object} schema Local JSON schema.
+ * @returns {object} Gemini-compatible schema.
+ */
 export function toGeminiSchema(schema) {
   const out = {};
   for (const [key, value] of Object.entries(schema)) {

@@ -26,6 +26,10 @@ Rules:
 /**
  * Builds the user message. All untrusted values are serialised as JSON data inside a delimited block.
  */
+/** Builds a user prompt from the profile and current air reading.
+ * @param {{profile: import('../types.js').Profile, air: import('../types.js').AirReading}} input
+ * @returns {string} Prompt text.
+ */
 export function buildUserPrompt({ profile, air }) {
   const data = {
     city: air.place,
@@ -107,12 +111,16 @@ function parseGeminiPayload(payload) {
 /**
  * Creates the Gemini planner. Throws AppError on any failure so the route can fall back safely.
  * @param {{ apiKey: string, model: string, timeoutMs: number, fetchImpl?: typeof fetch }} options
+ * @returns {{ enabled: boolean, generatePlan(input: {profile: import('../types.js').Profile, air: import('../types.js').AirReading}): Promise<import('../types.js').Plan> }} Planner service.
  */
 export function createGeminiPlanner({ apiKey, model, timeoutMs, fetchImpl = fetch }) {
   return {
     enabled: Boolean(apiKey),
 
-    /** @param {{ profile: object, air: object }} input */
+    /** Generates a validated plan using Gemini.
+     * @param {{ profile: import('../types.js').Profile, air: import('../types.js').AirReading }} input
+     * @returns {Promise<import('../types.js').Plan>} Validated plan.
+     */
     async generatePlan(input) {
       if (!apiKey) throw new AppError(503, 'gemini_disabled', 'Gemini is not configured.');
       const payload = await requestGemini(fetchImpl, { model, apiKey, timeoutMs, input });

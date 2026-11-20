@@ -7,6 +7,11 @@ const MAX_CACHE_ENTRIES = 200;
 
 /** Small TTL cache with a size cap (oldest entry evicted first). */
 export class TtlCache {
+  /** Creates a size-limited time-to-live cache.
+   * @param {number} ttlMs Entry lifetime in milliseconds.
+   * @param {number} [maxEntries] Maximum stored entries.
+   * @param {() => number} [now] Clock used for expiry checks.
+   */
   constructor(ttlMs, maxEntries = MAX_CACHE_ENTRIES, now = () => Date.now()) {
     this.ttlMs = ttlMs;
     this.maxEntries = maxEntries;
@@ -52,8 +57,9 @@ async function getJson(fetchImpl, url, timeoutMs, label) {
 const finiteOrNull = (value) => (typeof value === 'number' && Number.isFinite(value) ? value : null);
 
 /**
- * Creates an air-quality service. `fetchImpl` is injectable so tests never touch the network.
+ * Creates an air-quality service. `fetchImpl` can replace network access.
  * @param {{ fetchImpl?: typeof fetch, timeoutMs: number, cacheTtlMs: number, now?: () => number }} options
+ * @returns {{ getAirQuality(city: string, manualAqi: number|null): Promise<import('../types.js').AirReading> }} Air-quality service.
  */
 export function createAirQualityService({ fetchImpl = fetch, timeoutMs, cacheTtlMs, now }) {
   const cache = new TtlCache(cacheTtlMs, MAX_CACHE_ENTRIES, now);
