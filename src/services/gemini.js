@@ -51,6 +51,59 @@ function extractText(payload) {
   return parts.map((part) => (typeof part.text === 'string' ? part.text : '')).join('');
 }
 
+function buildRequestBody(input) {
+  return {
+    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    contents: [{ role: 'user', parts: [{ text: buildUserPrompt(input) }] }],
+    generationConfig: {
+      temperature: TEMPERATURE,
+      responseMimeType: 'application/json',
+      responseSchema: toGeminiSchema(PLAN_JSON_SCHEMA),
+    },
+  };
+}
+
+async function requestGemini(fetchImpl, { model, apiKey, timeoutMs, input }) {
+  let response;
+  try {
+    response = await fetchImpl(`${GEMINI_ENDPOINT}/${encodeURIComponent(model)}:generateContent`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(timeoutMs),
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify(buildRequestBody(input)),
+    });
+  } catch (cause) {
+    throw new AppError(502, 'gemini_unreachable', 'The AI service did not respond in time.', { cause });
+  }
+
+  if (!response.ok) {
+    throw new AppError(502, 'gemini_error', `The AI service returned status ${response.status}.`);
+  }
+
+  try {
+    return await response.json();
+  } catch (cause) {
+    throw new AppError(502, 'gemini_invalid_json', 'The AI service returned unreadable output.', { cause });
+  }
+}
+
+function parseGeminiPayload(payload) {
+  let parsed;
+  try {
+    parsed = JSON.parse(extractText(payload));
+  } catch (cause) {
+    throw new AppError(502, 'gemini_invalid_json', 'The AI service returned unreadable output.', { cause });
+  }
+
+  const result = validatePlan(parsed);
+  if (!result.ok) {
+    throw new AppError(502, 'gemini_invalid_plan', 'The AI output did not match the expected format.', {
+      meta: { errors: result.errors },
+    });
+  }
+  return result.value;
+}
+
 /**
  * Creates the Gemini planner. Throws AppError on any failure so the route can fall back safely.
  * @param {{ apiKey: string, model: string, timeoutMs: number, fetchImpl?: typeof fetch }} options
@@ -62,45 +115,8 @@ export function createGeminiPlanner({ apiKey, model, timeoutMs, fetchImpl = fetc
     /** @param {{ profile: object, air: object }} input */
     async generatePlan(input) {
       if (!apiKey) throw new AppError(503, 'gemini_disabled', 'Gemini is not configured.');
-
-      let response;
-      try {
-        response = await fetchImpl(`${GEMINI_ENDPOINT}/${encodeURIComponent(model)}:generateContent`, {
-          method: 'POST',
-          signal: AbortSignal.timeout(timeoutMs),
-          headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-            contents: [{ role: 'user', parts: [{ text: buildUserPrompt(input) }] }],
-            generationConfig: {
-              temperature: TEMPERATURE,
-              responseMimeType: 'application/json',
-              responseSchema: toGeminiSchema(PLAN_JSON_SCHEMA),
-            },
-          }),
-        });
-      } catch (cause) {
-        throw new AppError(502, 'gemini_unreachable', 'The AI service did not respond in time.', { cause });
-      }
-
-      if (!response.ok) {
-        throw new AppError(502, 'gemini_error', `The AI service returned status ${response.status}.`);
-      }
-
-      let parsed;
-      try {
-        parsed = JSON.parse(extractText(await response.json()));
-      } catch (cause) {
-        throw new AppError(502, 'gemini_invalid_json', 'The AI service returned unreadable output.', { cause });
-      }
-
-      const result = validatePlan(parsed);
-      if (!result.ok) {
-        throw new AppError(502, 'gemini_invalid_plan', 'The AI output did not match the expected format.', {
-          meta: { errors: result.errors },
-        });
-      }
-      return result.value;
+      const payload = await requestGemini(fetchImpl, { model, apiKey, timeoutMs, input });
+      return parseGeminiPayload(payload);
     },
   };
 }
