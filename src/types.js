@@ -1,22 +1,131 @@
-/** @typedef {'walk'|'cycle'|'two_wheeler'|'car'|'transit'|'wfh'} CommuteMode */
-/** @typedef {'apartment'|'house'} HomeType */
-/** @typedef {'gas'|'induction'|'biomass'} CookingFuel */
-/** @typedef {'low'|'medium'|'high'} ConfidenceLevel */
-/** @typedef {{ children: boolean, elderly: boolean, respiratory: boolean, pregnant: boolean }} HouseholdFlags */
-/** @typedef {{ city: string, household: HouseholdFlags, commute: CommuteMode, commuteKm: number, homeType: HomeType, hasPurifier: boolean, cookingFuel: CookingFuel, manualAqi: number|null }} Profile */
-/** @typedef {Omit<Profile, 'commuteKm'|'manualAqi'> & { commuteKm?: number, manualAqi?: number }} PlanRequest */
-/** @typedef {{ key: string, maxAqi: number, label: string, icon: string, guidance: string }} AqiCategory */
-/** @typedef {{ aqi: number, pm25: number, pm10: number|null, category: AqiCategory, source: string, place: string, observedAt: string|null }} AirReading */
-/** @typedef {{ title: string, action: string, why: string, bestTime?: string, impact: { estimate: string, confidence: ConfidenceLevel } }} PlanItem */
-/** @typedef {{ healthAlert: { headline: string, summary: string, atRisk: string[] }, routines: PlanItem[], indoor: PlanItem[], swaps: PlanItem[] }} Plan */
-/** @typedef {{ baselineExposure: number, planExposure: number, reductionPercent: number, baselineCo2Kg: number, planCo2Kg: number, co2SavedKg: number, assumptions: string[] }} Comparison */
-/** @typedef {{ mode: 'ai'|'offline', air: AirReading, plan: Plan, comparison: Comparison, disclaimer: string }} PlanResponse */
-/** @typedef {{ field: string, message: string }} FieldError */
-/** @typedef {{ city: string, household: HouseholdFlags, commute: CommuteMode, commuteKm: string, homeType: HomeType, hasPurifier: boolean, cookingFuel: CookingFuel, manualAqi: string }} FormValues */
-/** @typedef {{ rateLimitWindowMs: number, rateLimitMax: number }} RateLimitConfig */
-/** @typedef {{ isProduction: boolean, port: number, geminiApiKey: string, geminiModel: string, geminiTimeoutMs: number, upstreamTimeoutMs: number, cacheTtlMs: number, rateLimitWindowMs: number, rateLimitMax: number, trustProxy: number }} AppConfig */
-/** @typedef {{ getAirQuality(city: string, manualAqi: number|null): Promise<AirReading> }} AirQualityService */
-/** @typedef {{ enabled: boolean, generatePlan(input: { profile: Profile, air: AirReading }): Promise<Plan> }} PlannerService */
-/** @typedef {Pick<Console, 'warn'|'error'>} AppLogger */
+/**
+ * Supported commute modes in the form and API.
+ * @typedef {'walk'|'cycle'|'two_wheeler'|'car'|'transit'|'wfh'} CommuteMode
+ */
+
+/**
+ * AQI band keys used in air readings and alert styling.
+ * @typedef {'good'|'moderate'|'sensitive'|'unhealthy'|'very-unhealthy'|'hazardous'} AqiBand
+ */
+
+/**
+ * Origin of the air reading used to build a plan.
+ * @typedef {'live'|'live-cached'|'manual'} AirSource
+ */
+
+/**
+ * Supported home types.
+ * @typedef {'apartment'|'house'} HomeType
+ */
+
+/**
+ * Supported cooking fuels.
+ * @typedef {'gas'|'induction'|'biomass'} CookingFuel
+ */
+
+/**
+ * Confidence labels shown with estimated impacts.
+ * @typedef {'low'|'medium'|'high'} ConfidenceLevel
+ */
+
+/**
+ * Household members or health conditions used to tailor advice.
+ * @typedef {{ children: boolean, elderly: boolean, respiratory: boolean, pregnant: boolean }} HouseholdFlags
+ */
+
+/**
+ * Fully normalized profile passed to planning services.
+ * @typedef {{ city: string, household: HouseholdFlags, commute: CommuteMode, commuteKm: number, homeType: HomeType, hasPurifier: boolean, cookingFuel: CookingFuel, manualAqi: number|null }} Profile
+ */
+
+/**
+ * User-supplied request fields; the server fills omitted optional values.
+ * @typedef {{ city: string, household?: Partial<HouseholdFlags>, commute?: CommuteMode, commuteKm?: number, homeType?: HomeType, hasPurifier?: boolean, cookingFuel?: CookingFuel, manualAqi?: number }} PlanRequest
+ */
+
+/**
+ * AQI category metadata displayed by the interface.
+ * @typedef {{ key: AqiBand, maxAqi: number, label: string, icon: string, guidance: string }} AqiCategory
+ */
+
+/**
+ * Normalized live or manual air-quality data.
+ * @typedef {{ aqi: number, pm25: number, pm10: number|null, category: AqiCategory, source: AirSource, place: string, observedAt: string|null }} AirReading
+ */
+
+/**
+ * Cached live air data before the response source label is applied.
+ * @typedef {Omit<AirReading, 'source'>} CachedAirReading
+ */
+
+/**
+ * One recommendation and its estimated impact.
+ * @typedef {{ title: string, action: string, why: string, bestTime?: string, impact: { estimate: string, confidence: ConfidenceLevel } }} PlanItem
+ */
+
+/**
+ * Complete plan returned by Gemini or the fallback planner.
+ * @typedef {{ healthAlert: { headline: string, summary: string, atRisk: string[] }, routines: PlanItem[], indoor: PlanItem[], swaps: PlanItem[] }} Plan
+ */
+
+/**
+ * Illustrative exposure and commute emissions comparison.
+ * @typedef {{ baselineExposure: number, planExposure: number, reductionPercent: number, baselineCo2Kg: number, planCo2Kg: number, co2SavedKg: number, assumptions: string[] }} Comparison
+ */
+
+/**
+ * API response rendered by the browser.
+ * @typedef {{ mode: 'ai'|'offline', air: AirReading, plan: Plan, comparison: Comparison, disclaimer: string }} PlanResponse
+ */
+
+/**
+ * One field-level validation issue.
+ * @typedef {{ field: string, message: string }} FieldError
+ */
+
+/**
+ * Raw values read from the browser form.
+ * @typedef {{ city: string, household: HouseholdFlags, commute: CommuteMode, commuteKm: string, homeType: HomeType, hasPurifier: boolean, cookingFuel: CookingFuel, manualAqi: string }} FormValues
+ */
+
+/**
+ * Result returned when validating a plan generated by the model.
+ * @typedef {{ ok: true, value: Plan } | { ok: false, errors: string[] }} PlanValidation
+ */
+
+/**
+ * Result returned when validating an API request body.
+ * @typedef {{ ok: true, value: Profile } | { ok: false, errors: FieldError[] }} RequestValidation
+ */
+
+/**
+ * JSON schema shape used by the plan validator and Gemini adapter.
+ * @typedef {{ type?: string, enum?: string[], items?: GeminiSchema, properties?: Record<string, GeminiSchema>, required?: string[], maxLength?: number, minItems?: number, maxItems?: number, [key: string]: unknown }} GeminiSchema
+ */
+
+/**
+ * Runtime server settings loaded from environment variables.
+ * @typedef {{ isProduction: boolean, port: number, geminiApiKey: string, geminiModel: string, geminiTimeoutMs: number, upstreamTimeoutMs: number, cacheTtlMs: number, rateLimitWindowMs: number, rateLimitMax: number, trustProxy: number }} AppConfig
+ */
+
+/**
+ * Air-quality service consumed by the plan route.
+ * @typedef {{ getAirQuality(city: string, manualAqi: number|null): Promise<AirReading> }} AirQualityService
+ */
+
+/**
+ * Planner service consumed by the plan route.
+ * @typedef {{ enabled: boolean, generatePlan(input: { profile: Profile, air: AirReading }): Promise<Plan> }} PlannerService
+ */
+
+/**
+ * Logger methods used by the Express application.
+ * @typedef {Pick<Console, 'warn'|'error'>} AppLogger
+ */
+
+/**
+ * Rate-limiter settings consumed by the API middleware.
+ * @typedef {{ rateLimitWindowMs: number, rateLimitMax: number }} RateLimitConfig
+ */
 
 export {};

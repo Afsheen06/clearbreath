@@ -24,10 +24,8 @@ Rules:
 - Output JSON only, matching the provided schema.`;
 
 /**
- * Builds the user message. All untrusted values are serialised as JSON data inside a delimited block.
- */
-/** Builds a user prompt from the profile and current air reading.
- * @param {{profile: import('../types.js').Profile, air: import('../types.js').AirReading}} input
+ * Builds the user message with all untrusted values serialized inside a data block.
+ * @param {{ profile: import('../types.js').Profile, air: import('../types.js').AirReading }} input
  * @returns {string} Prompt text.
  */
 export function buildUserPrompt({ profile, air }) {

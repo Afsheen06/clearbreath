@@ -13,6 +13,7 @@ export const RULES = Object.freeze({
 });
 
 /**
+ * Validates raw form values and returns field-specific messages.
  * @param {import('../../src/types.js').FormValues} values Raw form values.
  * @returns {import('../../src/types.js').FieldError[]} Validation errors.
  */

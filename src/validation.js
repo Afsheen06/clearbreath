@@ -85,7 +85,7 @@ function readHousehold(raw, fail) {
 /**
  * Validates and normalises an untrusted /api/plan request body.
  * @param {unknown} body
- * @returns {{ ok: true, value: import('./types.js').Profile } | { ok: false, errors: import('./types.js').FieldError[] }}
+ * @returns {import('./types.js').RequestValidation}
  */
 export function validatePlanRequest(body) {
   if (!isPlainObject(body)) {

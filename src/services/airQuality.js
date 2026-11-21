@@ -5,7 +5,9 @@ const GEOCODE_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const AIR_URL = 'https://air-quality-api.open-meteo.com/v1/air-quality';
 const MAX_CACHE_ENTRIES = 200;
 
-/** Small TTL cache with a size cap (oldest entry evicted first). */
+/** Small TTL cache with a size cap (oldest entry evicted first).
+ * @template T
+ */
 export class TtlCache {
   /** Creates a size-limited time-to-live cache.
    * @param {number} ttlMs Entry lifetime in milliseconds.
@@ -19,6 +21,10 @@ export class TtlCache {
     this.entries = new Map();
   }
 
+  /** Returns a non-expired cached value, if present.
+   * @param {string} key Cache key.
+   * @returns {T|undefined} Cached value or undefined.
+   */
   get(key) {
     const hit = this.entries.get(key);
     if (!hit) return undefined;
@@ -29,6 +35,10 @@ export class TtlCache {
     return hit.value;
   }
 
+  /** Stores a value with the current timestamp.
+   * @param {string} key Cache key.
+   * @param {T} value Value to cache.
+   */
   set(key, value) {
     if (this.entries.size >= this.maxEntries) {
       this.entries.delete(this.entries.keys().next().value);
@@ -100,6 +110,7 @@ function createAirLookup(fetchImpl, timeoutMs) {
  * @returns {{ getAirQuality(city: string, manualAqi: number|null): Promise<import('../types.js').AirReading> }} Air-quality service.
  */
 export function createAirQualityService({ fetchImpl = fetch, timeoutMs, cacheTtlMs, now }) {
+  /** @type {TtlCache<import('../types.js').CachedAirReading>} */
   const cache = new TtlCache(cacheTtlMs, MAX_CACHE_ENTRIES, now);
   const { geocode, fetchCurrent } = createAirLookup(fetchImpl, timeoutMs);
 
